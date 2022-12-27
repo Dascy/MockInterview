@@ -33,6 +33,8 @@ ACID表示原子性（atomicity）、一致性（consistency）、隔离性（is
 
 解决了脏读问题。该级别保证了再同一个事务中多次读取相同记录的结果一致。可重复读无法解决幻读问题。
 
+事务未提交时反复读取的同一数据一致。
+
 是MySQL的默认事务隔离级别。
 
 #### SERALIZABLE（串行化）
@@ -56,7 +58,7 @@ InnoDB的MVCC，是采用了乐观锁的机制。在每行记录后，保存了�
 
 #### DELETE
 
-   为删除的每一行爆粗您当前系统版本号作为行删除标识
+   为删除的每一行保存当前系统版本号作为行删除标识
 
 #### UPDATE
 
@@ -385,6 +387,14 @@ alter table system_user add index user_uuid_index(user_uuid(10));
 - 隐式转换导致索引失效
 - 索引列进行运算
 
+### MySQL查询需要进行几次IO
+
+#### 一次IO的计算方式
+
+MySQL查询数据库时，不论读一行，还是读多行，都是将这些行所在的整页数据加载，然后在内存中匹配过滤出最终结果。即一次页加载就是一次IO。
+
+如果主键索引有3层。二级索引有3层。那么一次二级索引的条件检索就是6次IO
+
 ## MySQL锁机制
 
 MySQL根据为了解决并发问题、数据安全问题，使用了锁机制。可以按照颗粒度分为行级锁和表级锁。
@@ -392,6 +402,48 @@ MySQL根据为了解决并发问题、数据安全问题，使用了锁机制。
 ### 表级锁
 
 Mysql中锁定粒度最大 的一种锁，对当前操作的整张表加锁，实现简单 ，资源消耗也比较少，加锁快，不会出现死锁 。其锁定粒度最大，触发锁冲突的概率最高，并发度最低，MyISAM和 InnoDB引擎都支持表级锁。按照使用方法分为共享锁和排他锁
+
+#### 发生情况
+
+- 锁表发生在insert update 、delete 中
+- 表的原理是 数据库使用独占式封锁机制，当执行上面的语句时，对表进行锁住，直到发生commite 或者 回滚 或者退出数据库用户；
+- 锁表的原因 ：
+
+1. A程序执行了对 tableA 的 insert ，并还未 commite时，B程序也对tableA 进行insert 则此时会发生资源正忙的异常 就是锁表；
+2. 锁表常发生于并发而不是并行（并行时，一个线程操作数据库时，另一个线程是不能操作数据库的，cpu 和i/o 分配原则）
+
+#### 解除办法
+
+**查看进程id，然后用kill id杀掉进程**
+
+```sql
+show processlist;
+SELECT * FROM information_schema.PROCESSLIST；
+```
+
+**查看正在执行的进程**
+
+```sql
+SELECT * FROM information_schema.PROCESSLIST where length(info) >0 ;
+```
+
+**查看是否锁表**
+
+```sql
+show OPEN TABLES where In_use > 0;
+```
+
+**查看被锁住的表**
+
+```sql
+SELECT * FROM INFORMATION_SCHEMA.INNODB_LOCKS;
+```
+
+**杀掉锁表进程**
+
+```sql
+kill  5601
+```
 
 #### 实现
 
@@ -481,4 +533,168 @@ update test_user SET age=22  where id=1;
 #### 优点与不足
 
  乐观并发控制相信事务之间的数据竞争(data race)的概率是比较小的，因此尽可能直接做下去，直到提交的时候才去锁定，所以不会产生任何锁和死锁。但如果直接简单这么做，还是有可能会遇到不可预期的结果，例如两个事务都读取了数据库的某一行，经过修改以后写回数据库，这时就遇到了问题。
+
+## MySQL安装
+
+### 压缩包安装
+
+#### 前往官网下载对应Linux所需的安装包
+
+[官网地址](https://www.mysql.com/)
+
+![](/picture/MySQL/MySQL_downLoad_01.jpg)
+
+![](/picture/MySQL/MySQL_downLoad_02.jpg)
+
+![](/picture/MySQL/MySQL_downLoad_03.jpg)
+
+#### 上传压缩包并解压
+
+```shell
+cd  /usr/local/
+tar -xvf   mysql-5.7.11-Linux-glibc2.5-x86_64.tar.gz  
+mv   mysql-5.7.11-linux-glibc2.5-x86_64    mysql 
+mkdir   /usr/local/mysql/data
+```
+
+#### 创建mysql用户组和修改权限
+
+```shell
+groupadd  mysql  
+useradd -g   mysql mysql
+chown -R   mysql.mysql /usr/local/mysql/ 
+```
+
+#### 执行初始化命令
+
+```shell
+[root@localhost mysql] ./bin/mysql_install_db --user=mysql --basedir=/usr/local/mysql/ --datadir=/usr/local/mysql/data/ 
+```
+
+#### mysql的服务脚本放到系统服务中
+
+```shell
+cp -a ./support-files/mysql.server /etc/init.d/mysqld 
+```
+
+#### 修改my.cnf配置
+
+```shell
+[mysql]
+# 设置mysql客户端默认字符集
+default-character-set=utf8mb4
+[mysqld]
+#设置端口，默认为3306
+port = 3306
+#设置数据库默认不区分大小写
+lower_case_table_names=1
+# 设置mysql的安装目录
+basedir=/usr/local/mysql
+# 设置mysql数据库的数据的存放目录
+datadir=/usr/local/mysql/data
+# 允许最大连接数
+max_connections=200
+# 服务端使用的字符集默认为8比特编码的latin1字符集
+character-set-server=utf8
+# 创建新表时将使用的默认存储引擎
+default-storage-engine=INNODB
+sql_mode = "STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO"
+# 允许最大连接数
+max_connections=10000
+# 允许连接失败的次数。这是为了防止有人从该主机试图攻击数据库系统
+max_connect_errors=10
+# 默认使用“mysql_native_password”插件认证
+default_authentication_plugin=mysql_native_password
+server-id=10
+```
+
+#### 启动MySQL
+
+```shell
+service mysqld start  
+```
+
+#### 修改密码
+
+```shell
+mysql -u root mysql 
+update mysql.user set password=password('新密码') where user='root' and host='localhost';
+```
+
+#### 创建同步连接
+
+```shell
+#创建快捷方式： 服务启动后，直接运行mysql -u root -p即可登录，不需要进入到对应的目录
+ln -s /usr/local/mysql/bin/mysql /usr/bin  
+```
+
+#### 配置远程登录
+
+```shell
+use mysql;
+update user set user.Host='%' where user.User='root';
+flush privileges;
+```
+
+
+
+## 主备配置
+
+### 准备两台服务器
+
+一台作为主服务器、一台作为备份服务器
+
+### 主服务器配置
+
+```shell
+[root@master ~]# vim /etc/my.cnf
+#在[mysqld]中添加
+#启用二进制日志 
+log-bin= mysql-bin-master 
+#本机数据库 ID 标示，主从配置中ID要唯一
+server-id= 1 
+#可以被从服务器复制的库, 二进制需要同步的数据库名
+binlog-do-db= test 
+#如果有多个数据库，需要重复配置，不能直接在后面用逗号增加，否则mysql 会把这里当成一个数据库，会有坑
+#binlog-do-db= test2 
+#binlog-do-db= test3 
+#注释掉 binlog_do_db 和 binlog_ignore_db ，则表示备份全部数据库
+#不可以被从服务器复制的库
+binlog-ignore-db= mysql 
+#保存并重启MySQL服务(如果重启卡死现象，kill 掉再启动) 
+[root@master ~]# service mysql restart
+```
+
+### 授权主从同步slave用户权限
+
+```shell
+[root@master ~]# mysql -uroot -p'root123'
+mysql> grant replication slave on *.* to slave@192.168.183.139 identified by "root123"; 
+#ip地址为从库的IP  创建slave账号slave，密码root123
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+mysql> show master status; #查看主服务器状态信息
+mysql> show binlog events\G;  #展示相关状态
+
+```
+
+### MySQL从服务器配置
+
+```shell
+[root@slave ~]# vim /etc/my.cnf
+#在[mysqld]中添加
+#从服务器没必要开启bin-log日志，
+server-id=2 
+#从服务器ID号，不要和主ID相同，如果设置多个从服务器，每个从服务器必须有一个唯一的server-id值，必须与主服务器的以及其它从服务器的不相同。
+#可以认为 server-id值类似于IP地址：这些ID值能唯一识别复制服务器群集中的每个服务器实例。
+#重启从服务器MySQL服务
+[root@slave ~]# service mysql restart
+#从服务器设置主服务器配置
+[root@slave ~]# mysql -uroot -proot123
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+#授权
+mysql> change master to master_host='192.168.183.140',master_user='slave',master_password='123456'; #IP地址为主服务器地址。
+Query OK, 0 rows affected, 2 warnings (0.01 sec)
+mysql> start slave; #启动slave
+mysql> show slave status\G； #查看状态
+```
 
