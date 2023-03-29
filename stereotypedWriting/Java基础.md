@@ -175,10 +175,6 @@ System.out.println(collect.size());
         userStream.sorted().forEach(System.out::println);
 ```
 
-##### DateAPI
-
-
-
 ### 反射
 
 #### 介绍
@@ -1198,6 +1194,21 @@ JMM是一个抽象概念。线程本地会有一个私有的本地内存。线�
 
 volatile和synchronized
 
+#### 死锁的条件
+
+- 互斥条件：进程要求对所分配的资源进行排它性控制，即在一段时间内某资源仅为一进程所占用。
+- 请求和保持条件：当进程因请求资源而阻塞时，对已获得的资源保持不放。
+- 不剥夺条件：进程已获得的资源在未使用完之前，不能剥夺，只能在使用完时由自己释放。
+- 环路等待条件：在发生死锁时，必然存在一个进程–资源的环形链。
+
+#### 主线程等待子线程执行结束的实现方法
+
+- 子线程调用join（）
+- while(t.isAlive) 判断子线程是否存活
+- Thread.activeCount>1
+- CountDownLatch 
+- CyclicBarrier
+
 ### 多线程
 
 #### 线程的状态
@@ -1229,6 +1240,13 @@ public class demo {
     }
 }
 ```
+
+**适用于场景**
+
+- 1、每个线程需要有自己单独的实例
+- 2、实例需要在多个方法中共享，但不希望被多线程共享
+
+常用于 耗时统计
 
 ##### join
 
@@ -2763,9 +2781,44 @@ thread.start();
 - SynchronousQueue  不存储元素的阻塞队列
 - PriorityBlockingQueue  具有优先级的无限阻塞队列 
 
-##### 任务队列的优缺点
+##### 线程池的创建
 
+- 通过使用ThreadPoolExecutor创建
+- 使用@Async @Configutration @EnableAsync
 
+```Java
+@Configuration
+@EnableAsync
+public class ThreadPoolTaskConfig {
+
+    // 核心线程数（默认线程数）
+    private static final int corePoolSize = 10;
+    // 最大线程数
+    private static final int maxPoolSize = 100;
+    // 允许线程空闲时间（单位：默认为秒）
+    private static final int keepAliveTime = 10;
+    // 缓冲队列数
+    private static final int queueCapacity = 200;
+    // 线程池名前缀
+    private static final String threadNamePrefix = "lifeCycle-Service-";
+
+    @Bean("lifeCycleTaskExecutor")
+    public ThreadPoolTaskExecutor getAsyncExecutor(){
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(corePoolSize);
+        executor.setMaxPoolSize(maxPoolSize);
+        executor.setQueueCapacity(queueCapacity);
+        executor.setKeepAliveSeconds(keepAliveTime);
+        executor.setThreadNamePrefix(threadNamePrefix);
+        // 线程池对拒绝任务的处理策略
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        // 初始化
+        executor.initialize();
+        return executor;
+    }
+
+}
+```
 
 ##### 线程池提交任务
 
@@ -2822,6 +2875,8 @@ ThreadPoolExecutor poolExecutor =
 - ​    Executors.newSingleThreadScheduledExecutor：创建⼀个单线程的可以执⾏延迟任务的线程池；
 - ​    Executors.newWorkStealingPool：创建⼀个抢占式执⾏的线程池（任务执⾏顺序不确定）【JDK1.8 添加】。
 - ​    ThreadPoolExecutor：最原始的创建线程池的⽅式，它包含了 7 个参数可供设置，后⾯会详细讲。
+
+
 
 #### 程序计数器
 
@@ -2917,6 +2972,21 @@ public class CyclicBarrierTest {
 CountDownLatch主要将创建线程作为主线程。可以在主线程汇总其他线程返回的数据。不可重新初始化。
 
 CyclicBarrier可以reset。作用于多个线程。所有线程执行到标记点后，主线程继续执行。
+
+#### 原子操作类
+
+##### 原子更新基本类
+
+- `AtomicBoolean`
+- `AtomicInteger`
+- `AtomicLong`
+
+**常用方法**
+
+1. `addAndGet（interestingdelta）` 以原子方式将输入的数值与实力中的值相加
+2. `compareAndSet（int expect,int update）` 如果输入的数值等于预期，则更细输入值。
+3. `getAndIncrement()` 以原子方式加1自增
+4. `getAndSet（int newValue）` 以原子的方式设置newValue并返回旧值。
 
 #### 多线程并发读写同一条数据
 

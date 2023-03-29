@@ -41,7 +41,7 @@ ACID表示原子性（atomicity）、一致性（consistency）、隔离性（is
 
 最高隔离级别，强制事务串行执行。避免了幻读问题。串行化会在读取的每一行数据加锁。
 
-### MVCC（多版本并发控制）
+### MVCC（多版本并发控制解决幻读）
 
 InnoDB的MVCC，是采用了乐观锁的机制。在每行记录后，保存了两个隐藏的列来实现的。一列保存了创建时间，一列保存过期时间（或删除时间）。存储的内容为系统版本号。仅读已提交和可重复读支持MVCC
 
@@ -551,10 +551,10 @@ update test_user SET age=22  where id=1;
 #### 上传压缩包并解压
 
 ```shell
-cd  /usr/local/
-tar -xvf   mysql-5.7.11-Linux-glibc2.5-x86_64.tar.gz  
-mv   mysql-5.7.11-linux-glibc2.5-x86_64    mysql 
-mkdir   /usr/local/mysql/data
+cd  /data/
+tar -xvf   mysql-5.7.39-el7-x86_64.tar.gz  
+mv   mysql-5.7.39-el7-x86_64    mysql 
+mkdir   /data/mysql/mysql/data
 ```
 
 #### 创建mysql用户组和修改权限
@@ -606,12 +606,16 @@ max_connect_errors=10
 # 默认使用“mysql_native_password”插件认证
 default_authentication_plugin=mysql_native_password
 server-id=10
+max_allowed_packet =16777216
+#跳过密码
+skip-grant-tables
 ```
 
 #### 启动MySQL
 
 ```shell
-service mysqld start  
+service mysql start  
+service mysql restart  
 ```
 
 #### 修改密码
@@ -633,7 +637,11 @@ ln -s /usr/local/mysql/bin/mysql /usr/bin
 ```shell
 use mysql;
 update user set user.Host='%' where user.User='root';
+update user set authentication_string=password('root') where user='root';
 flush privileges;
+
+#解决缺少libncurses.so.5文件的报错
+ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libncurses.so.5
 ```
 
 

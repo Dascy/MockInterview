@@ -429,6 +429,13 @@ kafka的消息是不断追加到文件中的，这个特性使kafka可以充分�
 
 linux kernel2.2  提供的零拷贝机制，跳过了用户缓冲区的拷贝，建立一个磁盘空间和内存的直接映射。从而提高效率。
 
+**传统拷贝**
+
+1、将磁盘文件，读取到操作系统内核缓冲区Read Buffer
+2、将内核缓冲区的数据，复制到应用程序缓冲区Application Buffer
+3、将应用程序缓冲区Application Buffer中的数据，复制到socket网络发送缓冲区
+4、将Socket buffer的数据，复制到网卡，由网卡进行网络传输
+
 ##### 文件分段
 
 kafka的队列topic被分为了多个区partition，每个partition又分为多个段segment，所以一个队列中的消息实际上是保存在N多个片段文件中。操作的时候每次都是操作小文件。可以调高并行处理能力
@@ -662,7 +669,7 @@ public class MyConsumer {
 }
 ```
 
-### Kafka集群Controller、Rebalance、和HW
+### Kafka集群Controller、acks、ISR、Rebalance、和HW
 
 #### Controller
 
@@ -671,6 +678,18 @@ Kafka集群中的broker在zk中创建临时序号节点，序号最小的节点�
 - 当某个分区的leader副本出现故障时，由控制器负责为该分区选举新的leader副本
 - 当检测到某个分区的ISR集合发生变化时，有控制器负责通知所有的broker更新其元数据信息
 - 当使用Kafka-topics.sh脚本为某个topic增加分区数量时，同样还是由控制器负责让新分区被其他节点感知。
+
+#### acks
+
+- acks=0  producer写入 leader 分区，然后不等待 broker 同步完成的确认，就继续发送下一条(批)消息
+- acks=1 producer写入 leader 分区，producer需等待 leader 成功收到数据并得到确认，才发送下一条（批）消息。
+- acks=all producer 写入 leader 分区，roducer 需等待 leader 成功收到数据并得到确认，且 producer 得到 follwer确认，才发送下一条（批）消息
+
+#### ISR
+
+ISR全称是“In-Sync Replicas”，也就是保持同步的副本，他的含义就是，跟Leader始终保持同步的Follower有哪些。
+
+broker中的配置项,unclean.leader.election.enable = false，表示不允许非ISR中的副本被选举为首领，以免数据丢失。
 
 #### Rebalance
 
@@ -684,7 +703,9 @@ Kafka集群中的broker在zk中创建临时序号节点，序号最小的节点�
 
 #### HW（high-water）和LEO(LOG-END-OFFSET)
 
-HW俗称高水位，highWater的缩写。取partition对应的ISR中最小的LEO作为HW。consumer最多只能消费到HW所在的位置。另外每个replica都有HW。对于leader新写入的消息。consumer不能立即消费，leader会等待该消息被所有ISR中的replicas同步后更新HW
+Kafka 所有副本都有对应的高水位和 LEO 值，在 Leader 副本所在的 Broker 上，还保存了其他 Follower 副本的 LEO 值。
+
+HW俗称高水位，highWater的缩写。取partition中最小的LEO作为HW。consumer最多只能消费到HW所在的位置。另外每个replica都有HW。对于leader新写入的消息。consumer不能立即消费，leader会等待该消息被所有ISR中的replicas同步后更新HW
 
 ### Kafka线上优化
 
@@ -711,7 +732,7 @@ HW俗称高水位，highWater的缩写。取partition对应的ISR中最小的LEO
 - 启动多个消费者
 - 让消费者把消息发送到另外的topic上，进行消息转发
 
-#### 如何确保消息发送成功
+
 
 
 
