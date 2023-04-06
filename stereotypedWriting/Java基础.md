@@ -64,6 +64,41 @@ public interface fucInterface {
 - 不容易调试
 - 可读性查
 
+##### 函数式编程
+
+ 内置的函数式接口都在 java.util.function包下  
+
+| 接口                  | 参数   | 返回类型    | 说明                                       |
+| ------------------- | ---- | ------- | ---------------------------------------- |
+| Comsumer<T> 消费型接口   | T    | void    | 对T对象进行应用操作                               |
+| Supplier<T> 供给型接口   | 无    | T       | `T get()`;返回类型T的对象                       |
+| Function<T，R> 函数型接口 | T    | R       | `R apply（T，t）`；对T进行操作并返回R类型对象            |
+| Predicate<T> 断言型接口  | T    | boolean | `boolean test(T t)` 对T 对象进行条件判断并返回boolean |
+
+**简单使用示例**
+
+```java
+public static void main(String[] args) {
+       //供给型接口函数创建一个User对象 
+        Supplier<User> userSupplier = () -> new User();
+        //声明一个断言型函数进行判断
+        Predicate<User> p = user -> user.getAge()>10;
+        User u =userSupplier.get();
+        //声明一个操作型函数对user进行操作
+         Consumer<User> c = user -> {
+            user.setAge(5);
+            System.out.println(u.toString());
+        };
+        c.accept(u);
+        boolean test = p.test(u);
+        System.out.println(test);
+        //声明一个函数型接口 进行赋值操作并返回年龄
+        Function<User,Integer> f = user -> {user.setAge(18); user.setName("xiaohong");return user.getAge();};
+
+        System.out.println(f.apply(u));
+    }
+```
+
 ##### 方法引用和构造器引用
 
 ###### 方法引用
