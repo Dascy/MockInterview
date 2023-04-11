@@ -327,6 +327,10 @@ MyISAM支持空间索引，仅支持geometry类型。优势在于范围查找。
 
 MyISAM支持全文索引。只有CHAR、VARCAHR、TEXT上可以创建。
 
+#### 为什么选择B+Tree的数据结构
+
+主要原因还是B+Tree的特性导致树的结构会比较矮。查询可以减少IO次数。
+
 ### 最左前缀原则
 
 #### 是什么？
@@ -644,8 +648,6 @@ flush privileges;
 ln -s /usr/lib64/libncurses.so.6 /usr/lib64/libncurses.so.5
 ```
 
-
-
 ## 主备配置
 
 ### 准备两台服务器
@@ -706,3 +708,12 @@ mysql> start slave; #启动slave
 mysql> show slave status\G； #查看状态
 ```
 
+## MySQL性能相关问题
+
+### MySQL单表数据量瓶颈
+
+2000W会有明显的性能瓶颈，一般建议是500W以上或者单表超过2G进行分库分表。
+
+### 百万索引分页
+
+主键ID自增的情况下，可以通过ID>maxID(上次检索的ID) limit num 的方式。通过子查询检索出主键。之后进行检索。

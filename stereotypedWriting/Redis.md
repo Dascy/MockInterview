@@ -323,6 +323,18 @@ LRU是Least Recently Used的缩写，也就是表示最近很少使用，也可�
 
 LFU（Least Frequently Used），表示最近最少使用，它和key的使用次数有关，其思想是：根据key最近被访问的频率进行淘汰，比较少访问的key优先淘汰，反之则保留。
 
+#### IO模型
+
+
+
+
+
+#### 哨兵机制
+
+
+
+
+
 #### Redis的使用场景
 
 1. 缓存
@@ -331,4 +343,5 @@ LFU（Least Frequently Used），表示最近最少使用，它和key的使用�
 4. 全局ID
 5. 计数器
 6. 限流    以访问者的ip和其他信息作为key，访问一次增加一次计数，超过次数则返回false
+
 
