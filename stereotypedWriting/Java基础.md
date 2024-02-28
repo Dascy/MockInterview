@@ -326,7 +326,15 @@ System.out.println(xiaohong.getSex());
 
 ##### 什么是反序列化？
 
-将保存在磁盘文件中的java字节码重新转换成java对象称为反序列化。
+将保存在磁盘文件中的java字节码重新转换成java对象称为反序列化。  使用`transient ` 关键字可以指定不想要序列化的字段
+
+##### 为什么要序列化
+
+1.将对象转化成字节流可以方便传输、存储
+
+2.序列化不仅可以保存对象。还可以存储对象的引用对象数据
+
+3.可以实现分布式对象。
 
 ### 老生常谈的面向对象
 
@@ -601,7 +609,7 @@ equals()
 
 #### Java集合类图结构
 
-![](/picture/Java/CollectionDiagram.png)
+![](picture/Java/CollectionDiagram.png)
 
 从上图可以看出，Java的集合主要分为两大类。一类是Collection接口，存放单一元素；一类是Map接口，主要存放键值对。从上图可以看出。Collection接口继承了Iterable接口。被Queue、List、Set继承。
 
@@ -622,7 +630,7 @@ equals()
 - `LinkedList` :双向链表
 - `Vector` :  Object[]   
 
-#####Set
+##### Set
 
 - `HashSet`(无序、唯一)：基于HashMap实现，底层使用了HashMap存储数据
 - `TreeSet` (有序、唯一): 红黑树（自平衡二叉树）
@@ -885,7 +893,7 @@ static final int tableSizeFor(int cap) {
 
 `TreeMap` 和`HashMap` 都继承自`AbstractMap` ，但是需要注意的是`TreeMap`它还实现了`NavigableMap`接口和`SortedMap` 接口。
 
-![](/picture/java/TreeMapDiagram.png)
+![](picture/java/TreeMapDiagram.png)
 
 实现 `NavigableMap` 接口让 `TreeMap` 有了对集合内元素的搜索的能力。
 
@@ -1212,7 +1220,15 @@ IO包除了提供字符流和字节流，还提供了字节字符转换流
 - `OutputStreamWriter` 是Writer的子类。将输出的字符流转变为字节流。将一个字符流输出对象转变为字节流输出对象
 - `InputStreamReader` 是Reader的子类。将输入的字节流转变为字符流。即将一个字节流的输入对象转变为字符流的输入对象
 
-##### 
+#### NIO
+
+##### 简介
+
+同步非阻塞性IO流
+
+Netty
+
+
 
 ### 并发
 
@@ -3321,7 +3337,7 @@ public class TestNum {
 
 执行结果如下，会有一次执行成功，一次执行失败。
 
-![](/picture/thread/OptimisticLock.jpg)
+![](picture/thread/OptimisticLock.jpg)
 
 ###### 悲观锁
 

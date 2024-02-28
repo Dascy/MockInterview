@@ -377,7 +377,7 @@ Nacos是Alibaba开源的一项技术、可以用来作为配置中心和服务�
    @SpringBootApplication
    @NacosPropertySource(dataId = "example", autoRefreshed = true)
    public class NacosConfigApplication {
-
+   
        public static void main(String[] args) {
            SpringApplication.run(NacosConfigApplication.class, args);
        }
@@ -439,7 +439,7 @@ Nacos 2.X 相较于30s的长轮询，升级为长链接模式。配置变更后�
 
 客户端请求服务器端之后，如果配置一直，就hold住，如下图hold 80s 直到配置变更或者超时。
 
-![](/picture/changlunx.png)
+![](picture/changlunx.png)
 
 ##### 服务发现
 
