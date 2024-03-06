@@ -1662,9 +1662,9 @@ JDK7中新增了LinkedTransferQueue。使用了追加字节的方式来进行了
 
 #### synchronized
 
-- 修饰同步方法，锁对象是当前示例对象。
+- 修饰同步方法，锁对象是当前实例对象。
 - 修饰静态同步方法，锁对象是当前类的class对象。
-- 修饰同步方法块，锁对线是Synchronized括号里配置的对象。
+- 修饰同步方法块，锁对象是Synchronized括号里配置的对象。
 
 ##### 实现原理
 
@@ -1674,7 +1674,7 @@ JVM基于进入和退出monitor对象来实现同步。也就是monitorenter和m
 
 Java SE 1.6 之后 引入了偏向锁和轻量级锁的概念。锁的状态分为：无锁状态、偏向锁、轻量级锁状态和重量级锁状态。
 
-![](/picture/thread/lockup.jpg)
+![](./picture/thread/lockup.jpg)
 
 ###### 偏向锁
 
@@ -2805,7 +2805,6 @@ public class callableThread implements Callable {
 
 ```
 thread.start();
-
 ```
 
 #### 线程池

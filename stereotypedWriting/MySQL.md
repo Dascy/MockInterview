@@ -49,8 +49,8 @@ InnoDB的MVCC，是采用了乐观锁的机制。在每行记录后，保存了�
 
 ​     InnoDb会根据两个条件进行检索：
 
-1. ​     早于当前事务版本的数据行
-2. ​     行的删除版本未定义，或者删除版本大于当前事务的版本号
+1. 早于当前事务版本的数据行
+2. 行的删除版本未定义，或者删除版本大于当前事务的版本号
 
 #### INSERT
 
@@ -192,13 +192,13 @@ INSERT INTO t_back_to_table ( id, drinker_id, drinker_name, drinker_feature ) VA
 
 #### 聚簇索引示意图
 
-![](/picture/MySQL/index.jpg)
+![](picture/MySQL/index.jpg)
 
 创建的表的索引构成如上图所示，通过主键检索时，会先确定主键所属范围，之后在向下层检索。最终检索到叶子节点，通过主键ID获取到对应行的记录，返回。发生了三次IO。MySQL每次IO会检索一页数据。
 
 #### 非聚簇索引示意图
 
-![](/picture/MySQL/secondaryIndex.jpg)
+![](picture/MySQL/secondaryIndex.jpg)
 
 根据上图可以看出，非聚簇索引的叶子节点存放的是主键ID。
 
@@ -294,7 +294,7 @@ VALUES
 select * from test_user where name like '小%' and age=10;
 ```
 
-![](/picture/MySQL/indexConditionPush.jpg)
+![](picture/MySQL/indexConditionPush.jpg)
 
 ### 数据结构划分索引类型
 
@@ -546,11 +546,11 @@ update test_user SET age=22  where id=1;
 
 [官网地址](https://www.mysql.com/)
 
-![](/picture/MySQL/MySQL_downLoad_01.jpg)
+![](./picture/MySQL/MySQL_downLoad_01.jpg)
 
-![](/picture/MySQL/MySQL_downLoad_02.jpg)
+![](./picture/MySQL/MySQL_downLoad_02.jpg)
 
-![](/picture/MySQL/MySQL_downLoad_03.jpg)
+![](./picture/MySQL/MySQL_downLoad_03.jpg)
 
 #### 上传压缩包并解压
 
