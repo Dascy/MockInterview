@@ -151,7 +151,7 @@ zookeeper.connection.timeout.ms=18000
 ./kafka-consumer-groups.sh --bootstrap-server 192.168.1.101:9092 --describe --group test01
 ```
 
-![](/picture/kafka/kafka_consumer_log.jpg)
+![](./picture/kafka/kafka_consumer_log.jpg)
 
 - GROUP    分组名称
 - TOPIC       消费组所订阅的主题
@@ -227,7 +227,7 @@ zookeeper.connection.timeout.ms=18000
 ./kafka-topics.sh --create --bootstrap-server 192.168.1.101:9092 --replication-factor 3 --partitions 2 --topic my-replicated-topic
 ```
 
-![](/picture/kafka/kafka_replicated.jpg)
+![](./picture/kafka/kafka_replicated.jpg)
 
 - leader  kafka的读写操作，都发生在leader上。leader负责将数据同步给follower。当leader挂掉之后。经过主从选举，从多个follower中选举产生新的leader
 - Isr 表示可以同步和已同步的节点。如果节点性能较差，会被移除
@@ -427,14 +427,26 @@ kafka的消息是不断追加到文件中的，这个特性使kafka可以充分�
 
 ##### 零拷贝
 
-linux kernel2.2  提供的零拷贝机制，跳过了用户缓冲区的拷贝，建立一个磁盘空间和内存的直接映射。从而提高效率。
+linux kernel2.2  提供的零拷贝机制。使用DMA（Directory Memmory Access）技术。
 
-**传统拷贝**
+**未使用DMA的文件传输机制**
 
-1、将磁盘文件，读取到操作系统内核缓冲区Read Buffer
-2、将内核缓冲区的数据，复制到应用程序缓冲区Application Buffer
-3、将应用程序缓冲区Application Buffer中的数据，复制到socket网络发送缓冲区
-4、将Socket buffer的数据，复制到网卡，由网卡进行网络传输
+1. 用户调用read方法读取文件从用户态转变为内核态
+2. cpu发起IO从磁盘读取数据到磁盘缓冲区
+3. 之后中断IO将数据拷贝到PageCache
+4. 从PageCache拷贝到用户缓冲区
+
+CPU被大量占用
+
+**DMA技术**
+
+- 用户进程调用 read 方法，向操作系统发出 I/O 请求，请求读取数据到自己的内存缓冲区中，进程进入阻塞状态；
+- 操作系统收到请求后，进一步将 I/O 请求发送 DMA，然后让 CPU 执行其他任务；
+- DMA 进一步将 I/O 请求发送给磁盘；
+- 磁盘收到 DMA 的 I/O 请求，把数据从磁盘读取到磁盘控制器的缓冲区中，当磁盘控制器的缓冲区被读满后，向 DMA 发起中断信号，告知自己缓冲区已满；
+- **DMA 收到磁盘的信号，将磁盘控制器缓冲区中的数据拷贝到内核缓冲区中，此时不占用 CPU，CPU 可以执行其他任务**；
+- 当 DMA 读取了足够多的数据，就会发送中断信号给 CPU；
+- CPU 收到 DMA 的信号，知道数据已经准备好，于是将数据从内核拷贝到用户空间，系统调用返回；
 
 ##### 文件分段
 
@@ -450,7 +462,7 @@ Kafka 还支持对消息集合进行压缩，Producer可以通过GZIP或Snappy�
 
 #### Kafka发送消息缓冲区机制
 
-![](/picture/kafka/kafka_buffer_config.jpg)
+![](./picture/kafka/kafka_buffer_config.jpg)
 
 - kafka在本地设置有缓冲区。默认32MB
 
@@ -472,7 +484,7 @@ Kafka 还支持对消息集合进行压缩，Producer可以通过GZIP或Snappy�
 
 #### offset自动提交和手动提交
 
-##### ![](/picture/kafka/kakfa_offerset_commit.jpg)自动提交
+##### ![](./picture/kafka/kakfa_offerset_commit.jpg)自动提交
 
 consumer poll消息完成后，自动提交offset到kafka服务器
 
@@ -683,7 +695,7 @@ Kafka集群中的broker在zk中创建临时序号节点，序号最小的节点�
 
 - acks=0  producer写入 leader 分区，然后不等待 broker 同步完成的确认，就继续发送下一条(批)消息
 - acks=1 producer写入 leader 分区，producer需等待 leader 成功收到数据并得到确认，才发送下一条（批）消息。
-- acks=all producer 写入 leader 分区，roducer 需等待 leader 成功收到数据并得到确认，且 producer 得到 follwer确认，才发送下一条（批）消息
+- acks=all producer 写入 leader 分区，producer 需等待 leader 成功收到数据并得到确认，且 producer 得到 follwer确认，才发送下一条（批）消息
 
 #### ISR
 

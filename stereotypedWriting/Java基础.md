@@ -62,7 +62,7 @@ public interface fucInterface {
 ###### 缺点
 
 - 不容易调试
-- 可读性查
+- 可读性差
 
 ##### 函数式编程
 
@@ -676,7 +676,7 @@ ArrayList 插入指定位置或者末尾位置很快。但是数量大的时候�
 
 ###### 不需要扩容的情况
 
-ArrayList指定位置插入数据。需要将后续数据移动。效率相对较慢。LinkedList不需要移动。
+ArrayList指定位置插入数据。需要将后续数据移动。效率相对较慢。LinkedList不需要移动。 尾插效率相同。
 
 **综上**：如果需要频繁在中间位置插入数据。使用LinkedList会好一些。如果插入场景少，经常查询通常使用ArrayList。
 
@@ -1224,9 +1224,74 @@ IO包除了提供字符流和字节流，还提供了字节字符转换流
 
 ##### 简介
 
-同步非阻塞性IO流
+同步非阻塞性IO流,或者说new-io 。 I/O 与 NIO 最重要的区别是数据打包和传输的方式，I/O 以流的方式处理数据，而 NIO 以块的方式处理数据。
 
-Netty
+#### Channel(通道)
+
+Channel与流不同的点在于，流只能单向。Channel是双向的。可同时作用于读写。
+
+- FileChannel: 从文件中读写数据；
+- DatagramChannel: 通过 UDP 读写网络中数据；
+- SocketChannel: 通过 TCP 读写网络中数据；
+- ServerSocketChannel: 可以监听新进来的 TCP 连接，对每一个新进来的连接都会创建一个 SocketChannel。
+
+#### Buffer
+
+发送给通道的数据都要先通过缓存区。实质上是一个数组。
+
+缓存区类型如下：
+
+- ByteBuffer
+- CharBuffer
+- ShortBuffer
+- IntBuffer
+- LongBuffer
+- FloatBuffer
+- DoubleBuffer
+
+#### 使用NIO复制文件
+
+```java
+  public static void fastCopy(String src, String dist) throws IOException {
+
+        /* 获得源文件的输入字节流 */
+        FileInputStream fin = new FileInputStream(src);
+
+        /* 获取输入字节流的文件通道 */
+        FileChannel fcin = fin.getChannel();
+
+        /* 获取目标文件的输出字节流 */
+        FileOutputStream fout = new FileOutputStream(dist);
+
+        /* 获取输出字节流的通道 */
+        FileChannel fcout = fout.getChannel();
+
+        /* 为缓冲区分配 1024 个字节 */
+        ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
+
+        while (true) {
+
+            /* 从输入通道中读取数据到缓冲区中 */
+            int r = fcin.read(buffer);
+
+            /* read() 返回 -1 表示 EOF */
+            if (r == -1) {
+                break;
+            }
+
+            /* 切换读写 */
+            buffer.flip();
+
+            /* 把缓冲区的内容写入输出文件中 */
+            fcout.write(buffer);
+
+            /* 清空缓冲区 */
+            buffer.clear();
+        }
+    }
+```
+
+
 
 
 
